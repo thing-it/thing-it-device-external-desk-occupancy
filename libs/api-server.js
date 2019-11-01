@@ -59,9 +59,10 @@ class ApiServer {
       });
 
       this.expressApp.put('/desks/:deskId/occupy', (req, res) => {
-        if (req.params.deskId && req.body.userId) {
+        if (req.params.deskId && req.body.user) {
           //TODO: need rfactoring runing foreach only one time (1 occupyDesk & 1 getState)
-          const occupationResult = this.adapter.occupyDesk(req.params.deskId, req.body.userId);
+          let user = JSON.parse(req.body.user);
+          const occupationResult = this.adapter.occupyDesk(req.params.deskId, user);
           if (occupationResult) {
             return res.json(this.adapter.getState(req.params.deskId));
           } else {
@@ -73,8 +74,9 @@ class ApiServer {
       });
 
       this.expressApp.put('/desks/:deskId/release', (req, res) => {
-        if (req.params.deskId && req.body.userId) {
-          const result = this.adapter.releaseDesk(req.params.deskId, req.body.userId);
+        if (req.params.deskId && req.body.user) {
+          let user = JSON.parse(req.body.user);
+          const result = this.adapter.releaseDesk(req.params.deskId, user);
           if (result) {
             return res.json(this.adapter.getState(req.params.deskId));
           } else {

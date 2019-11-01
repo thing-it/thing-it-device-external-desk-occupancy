@@ -56,21 +56,21 @@ function Adapter() {
 
   }
 
-  Adapter.prototype.occupyDesk = function (deskId, userId) {
+  Adapter.prototype.occupyDesk = function (deskId, user) {
     let result = false;
     this.actors.forEach(item => {
       if (item.configuration.deskId === deskId) {
-        result = item.occupy(userId);
+        result = item.occupy(user);
       }
     });
     return result;
   }
 
-  Adapter.prototype.releaseDesk = function (deskId, userId) {
+  Adapter.prototype.releaseDesk = function (deskId, user) {
     let result = false;
     this.actors.forEach(item => {
       if (item.configuration.deskId === deskId) {
-        result = item.release(userId);
+        result = item.release(user);
       }
     });
     return result;
@@ -92,5 +92,26 @@ function Adapter() {
       }))
     }
     return response;
+  }
+
+  Adapter.prototype.cutUserAccount = function (userAccount) {
+    const accountParts = userAccount.split('@');
+    let cutUserName = '';
+    if (accountParts.length === 2) {
+      cutUserName = accountParts[0][0] + '*' + accountParts[0][accountParts[0].length - 1] + '@';
+      const dommainParts = accountParts[1].split('.');
+      if (dommainParts.length >= 2) {
+        cutUserName = cutUserName
+          + dommainParts[0][0]
+          + '*'
+          + dommainParts[dommainParts.length - 2][dommainParts[dommainParts.length - 2].length - 1]
+          + '.' + dommainParts[dommainParts.length - 1];
+      } else {
+        cutUserName = cutUserName + accountParts[1];
+      }
+    } else {
+      cutUserName = userAccount[0] + '*' + userAccount[userAccount.length - 1];
+    }
+    return cutUserName;
   }
 }

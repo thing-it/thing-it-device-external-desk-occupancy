@@ -27,30 +27,35 @@ module.exports = {
         }
       },
       {
-        label: "User Id",
-        id: "userId",
+        label: "user Account",
+        id: "userAccount",
         type: {
-          id: "string",
+          id: "srting"
         }
       },
       {
-        label: "Dooked At",
-        id: "bookedAt",
+        label: "User Name",
+        id: "userName",
         type: {
-          id: "datetime",
+          id: "srting"
         }
-      }
-    ],
-    services: [
-      {
-        id: "lock",
-        label: "Lock",
       },
       {
-        id: "unlock",
-        label: "Unlock",
-      }
+        label: "Expiration Timestamp",
+        id: "expirationTimestamp",
+        type: {
+          id: "integer"
+        }
+      },
+      {
+        label: "Error Mmessage",
+        id: "errorMessage",
+        type: {
+          id: "string"
+        }
+      }      
     ],
+    services: [],
     events: [
       {
         id: "occupancyStarted",
@@ -59,8 +64,6 @@ module.exports = {
         id: "occupancyEnded",
         label: "Occupancy Ended"
       }
-
-
     ]
   },
   create: function () {
@@ -71,7 +74,10 @@ module.exports = {
 function Desk() {
   Desk.prototype.start = function () {
     this.state = {
-      occupied: false
+      occupied: false,
+      userAccount: '',
+      userName: '',
+      expirationTimeStamp: 0,
     }
 
     return Promise.resolve();
@@ -96,22 +102,30 @@ function Desk() {
     this.state = state;
   }
 
-  Desk.prototype.occupy = function (userId) {
+  Desk.prototype.occupy = function (user, expirationTime) {
     if (!this.state.occupied) {
+      
+      const expirationTimeStamp = 
+      expirationTime ?
+        new Date(expirationTime).getTime() :
+        Date.now() + 30 * 60 * 1000;
+
       this.state.occupied = true;
-      this.state.userId = userId;
-      this.state.bookedAt = Date.now();
+      this.state.userAccount = user.account;
+      this.state.userName = this.device.cutUserAccount(user.account);
+      this.state.expirationTimeStamp = expirationTimeStamp;
       return true;
     } else {
       return false;
     }
   }
 
-  Desk.prototype.release = function (userId) {
-    if (this.state.userId === userId) {
+  Desk.prototype.release = function (user) {
+    if (this.checkAccessRights(user)) {
       this.state.occupied = false;
-      this.state.userId = undefined;
-      this.state.bookedAt = undefined;
+      this.state.userAccount = '';
+      this.state.userName = '';
+      this.state.expirationTimeStamp = 0;
       return true;
     } else {
       return false;
@@ -124,9 +138,19 @@ function Desk() {
       occupied: this.state.occupied
     }
     if (this.state.occupied) {
-      response.userId = this.state.userId;
-      response.bookedAt = this.state.bookedAt;
+      response.userName = this.state.userName;
+      response.expirationTimeStamp = this.state.expirationTimeStamp;
     }
     return response
+  }
+
+  Desk.prototype.checkAccessRights = function (userObject) {
+    if (this.state.userAccount === userObject.account) {
+      return true;
+    }
+    else if (Array.isArray(userObject.roles) && userObject.roles.includes(this.device.configuration.releaseRole)) {
+      return true;
+    }
+    return false;
   }
 }
